@@ -263,11 +263,12 @@ if mode == "Upload CampusOne (Raw)":
                 st.subheader("2. CLO -> PLO Mapping")
                 st.caption("Link each CLO to a Programme Learning Outcome.")
                 c1, c2, c3, c4 = st.columns(4)
+                plo_options = ["-"] + [f"PLO {i}" for i in range(1, 13)]
                 plo_map = {}
-                with c1: plo_map["CLO 1"] = st.selectbox("CLO 1 maps to:", [f"PLO {i}" for i in range(1, 13)])
-                with c2: plo_map["CLO 2"] = st.selectbox("CLO 2 maps to:", [f"PLO {i}" for i in range(1, 13)])
-                with c3: plo_map["CLO 3"] = st.selectbox("CLO 3 maps to:", [f"PLO {i}" for i in range(1, 13)])
-                with c4: plo_map["CLO 4"] = st.selectbox("CLO 4 maps to:", [f"PLO {i}" for i in range(1, 13)])
+                with c1: plo_map["CLO 1"] = st.selectbox("CLO 1 maps to:", plo_options)
+                with c2: plo_map["CLO 2"] = st.selectbox("CLO 2 maps to:", plo_options)
+                with c3: plo_map["CLO 3"] = st.selectbox("CLO 3 maps to:", plo_options)
+                with c4: plo_map["CLO 4"] = st.selectbox("CLO 4 maps to:", plo_options)
                 
                 analyze_btn = st.form_submit_button("Analyze & Generate Full Report")
             
@@ -339,13 +340,18 @@ if mode == "Upload CampusOne (Raw)":
                         # Map CLO scores to PLO
                         plo_data = []
                         for _, row in edited_clo_stats.iterrows():
-                            plo_data.append({
-                                "CLO": row['CLO'],
-                                "Mapped PLO": row['PLO'],
-                                "Score (%)": row['Overall %'],
-                                "Status": "PASS" if row['Overall %'] >= 50 else "NO"
-                            })
-                        st.dataframe(pd.DataFrame(plo_data), use_container_width=True)
+                            # Only include if mapped to a PLO
+                            if row['PLO'] != "-":
+                                plo_data.append({
+                                    "CLO": row['CLO'],
+                                    "Mapped PLO": row['PLO'],
+                                    "Score (%)": row['Overall %'],
+                                    "Status": "PASS" if row['Overall %'] >= 50 else "NO"
+                                })
+                        if plo_data:
+                            st.dataframe(pd.DataFrame(plo_data), use_container_width=True)
+                        else:
+                            st.info("No CLOs mapped to PLOs.")
 
                     # --- CRR: Audit Report ---
                     with t4:
