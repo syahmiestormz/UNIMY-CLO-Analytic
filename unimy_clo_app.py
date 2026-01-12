@@ -121,14 +121,9 @@ def generate_evidence_excel(course_info, student_results, clo_stats, plo_stats, 
     Generates an Excel file mimicking the 'Master Template' for audit evidence.
     Includes Setup, Table 1, Table 2, Table 3, and CRR sheets.
     """
-    try:
-        import xlsxwriter
-    except ImportError:
-        st.error("⚠️ Error: The 'xlsxwriter' library is missing. Please add `xlsxwriter` to your requirements.txt file.")
-        return None
-
+    # Use openpyxl as it is already installed for reading
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         # Sheet: Setup
         setup_data = {
             'Field': ['Course Name', 'Course Code', 'Semester', 'Lecturer Name'],
@@ -162,7 +157,9 @@ def generate_evidence_excel(course_info, student_results, clo_stats, plo_stats, 
             {'Section': '2. CLO ATTAINMENT', 'Detail': '', 'Value': ''}
         ]
         for c in clo_stats:
-            crr_rows.append({'Section': c['CLO'], 'Detail': 'Attainment %', 'Value': f"{c['Average (%)']:.2f}"})
+            # FIX: Use 'Overall %' instead of 'Average (%)' to match data source
+            val = c.get('Overall %', 0)
+            crr_rows.append({'Section': c['CLO'], 'Detail': 'Attainment %', 'Value': f"{val:.2f}"})
             
         pd.DataFrame(crr_rows).to_excel(writer, sheet_name='CRR (Audit Report)', index=False)
         
@@ -267,7 +264,7 @@ if mode == "Upload CampusOne (Raw)":
                 
                 # 2. PLO Mapping
                 st.subheader("2. CLO -> PLO Mapping")
-                st.caption("Link each CLO to a Programme Learning Outcome.")
+                st.caption("Link each CLO to a Programme Learning Outcome. Select '-' if a CLO is not mapped.")
                 c1, c2, c3, c4 = st.columns(4)
                 plo_options = ["-"] + [f"PLO {i}" for i in range(1, 13)]
                 plo_map = {}
