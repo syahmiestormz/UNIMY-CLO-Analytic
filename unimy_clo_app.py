@@ -121,6 +121,12 @@ def generate_evidence_excel(course_info, student_results, clo_stats, plo_stats, 
     Generates an Excel file mimicking the 'Master Template' for audit evidence.
     Includes Setup, Table 1, Table 2, Table 3, and CRR sheets.
     """
+    try:
+        import xlsxwriter
+    except ImportError:
+        st.error("⚠️ Error: The 'xlsxwriter' library is missing. Please add `xlsxwriter` to your requirements.txt file.")
+        return None
+
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         # Sheet: Setup
@@ -395,12 +401,13 @@ if mode == "Upload CampusOne (Raw)":
                         {'pass_rate': pass_rate, 'gpa': avg_gpa}
                     )
                     
-                    st.download_button(
-                        label="Download Full Master Excel (Evidence)",
-                        data=excel_data,
-                        file_name=f"Processed_Master_{info['code']}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                    if excel_data:
+                        st.download_button(
+                            label="Download Full Master Excel (Evidence)",
+                            data=excel_data,
+                            file_name=f"Processed_Master_{info['code']}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
 
         elif potential_cols: # Error parsing
             st.error(potential_cols) # Print error msg
